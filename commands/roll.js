@@ -5,6 +5,14 @@ module.exports = {
     execute(message,args)
     {
         
+        message.channel.send(this.roll(args));
+        
+        return;
+    },
+
+    roll(args)
+    {
+        
         var rollResult = 0;
         //individual rolls, packaged into a string.
         var Rolls = "";
@@ -44,8 +52,6 @@ module.exports = {
         //clears the last  "+ " from the bot response. That is, a message : "2 + 2 + 2 +  Total: 6" becomes "2 + 2 + 2 Total: 6"
         Rolls = Rolls.slice(0, (Rolls.length - 2) );
 
-        message.channel.send(`${Rolls} Total: ${rollResult}`);
-        this.test(message);
-        return;
+        return Rolls + "Total:" + rollResult;
     }
 }
