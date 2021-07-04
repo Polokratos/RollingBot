@@ -4,7 +4,11 @@ module.exports = {
 
     execute(message,args)
     {
-        
         return;
+    },
+
+    test()
+    {
+        return true;
     }
 }
