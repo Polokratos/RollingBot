@@ -15,6 +15,7 @@ module.exports = {
 
     test()
     {
+        //basically just whatever goes in there *should* result in "pong!"
         console.assert(this.ping("")   === 'pong!');
         console.assert(this.ping(34)   === 'pong!');
         console.assert(this.ping(null) === 'pong!');

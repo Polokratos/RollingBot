@@ -5,12 +5,12 @@ module.exports = {
     execute(message,args)
     {
         
-        message.channel.send(this.roll(args));
+        message.channel.send(this.rollold(args));
         
         return;
     },
 
-    roll(args)
+    rollold(args)
     {
         
         var rollResult = 0;
@@ -53,5 +53,71 @@ module.exports = {
         Rolls = Rolls.slice(0, (Rolls.length - 2) );
 
         return Rolls + "Total:" + rollResult;
+    },
+
+    /*
+    * Design-doc comment. Shut up it's fine!
+    * okay, what args do ew want were, what complexity etc?
+    * The "basic arg" should be 'x'd'y'; eg 3d6 or 4d20. Note: d6 and 1d6 shouyld be equivalent.
+    */
+
+    roll(args)
+    {
+        throw "Not Yet Implemented!";
+        let retval =
+        {
+            totalRolled: 0,
+            individualRolls: []
+        }
+
+        return retval;
+    },
+
+    test()
+    {
+        /*
+        * Basic test structure: 
+        * Set the arguments.
+        * Run the function.
+        * Assert that the returns match the expectations.
+        */
+        let testargs = ["1d2"]
+        let testval = this.roll(testargs);
+
+        console.assert(Number.isInteger(testval.totalRolled));
+        console.assert(testval.individualRolls.length == 1)
+        for(const roll of testval.individualRolls)
+        {
+            console.assert(Number.isInteger(roll));
+            console.assert(roll >= 1);
+            console.assert(roll <= 2);
+        }
+
+
+        testargs = ["3d6 4d8 d20"]
+        testval = this.roll(testargs);
+        
+        console.assert(Number.isInteger(testval.totalRolled));
+        console.assert(testval.individualRolls.length == (3 + 4 + 1) );
+        for(let i = 0; i < testval.individualRolls.length; i++)
+        {
+            console.assert(Number.isInteger(testval.individualRolls[i]))
+            console.assert(testval.individualRolls[i] >= 1);
+            if(i < 3)
+            {
+                console.assert(testval.individualRolls[i] <= 6);
+            }
+            else if (i < 7)
+            {
+                console.assert(testval.individualRolls[i] <= 8);
+            }
+            else
+            {
+                console.assert(testval.individualRolls[i] <= 20);
+            }
+        }
+        
+
+
     }
 }
