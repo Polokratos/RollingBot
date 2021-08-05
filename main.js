@@ -1,10 +1,4 @@
-/*
-* To run:
-* cmd, then path to working directory
-* cd /d F: to path to F drive
-* run "node ." OR "node main.js" into cmd
-* profit?
-*/
+
 
 
 
@@ -62,4 +56,6 @@ Client.on('message', message => {
 
 
 //Client verification token. As the repository is now public, the token was regenerated and the old token removed from repo.
+
 Client.login('');
+
