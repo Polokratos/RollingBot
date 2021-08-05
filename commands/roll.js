@@ -83,28 +83,24 @@ module.exports = {
     * 'h'(igh) OR 'w'(ysoki)    -> keep the highest results. ex. ()d()h() / ()k()w()
     * Would be used in this way: 3d4h1 would take the highest result of 3 rolls of a d4. 3d4h2 would take the highest 2 (drop the lowest).
     * 'l'(ow) OR 'n'(iski)  -> same as above, but keep lowest. ex. ()d()l() / ()k()n()
-    * 
-    * (x)@(y)   -> evaluate again the expression x recursively and return the sum of all evaluations, provided that the higest possible result has occured,
-    * AND condition y has to be true. The y condition is evaluated every time in the recursion chain.
+    * (x)@(y)   -> evaluate again the expression x recursively and return the sum of all evaluations, provided that x > y.
+    * This allows fe. a mechanic where on max result a roll is repeated. Or on min result.
     * Note that the implementation has to ensure that either: x has multiple 'states' it can end up in OR y can turn false.
     * 
     * (x)!(y) -> evaluate again the expression x recursively and return the sum of all evaluations, provided that condition y is true.
     * The y condition is evaluated every time in the recursion chain.
     * Note that the implementation has to ensure that y can turn false.
     * 
-    * (x)?(y):(z) -> the classic ternary operator. if x, eval y. else, eval z. (x)?(y) is equivalent to (x)?(y):(0)
+    * (x)?(y):(z) -> the ternary operator. if x, eval y. else, eval z. (x)?(y) is equivalent to (x)?(y):(0)
     * 
     * Note that if the ()!(), ()@(), or ()?():() are used inside of a greater pattern, they have to be used in parentheses.
     */
 
     
 
-
+    
 
     //Returns whether a macro is a vaid one for the roll() function.
-
-    //There technically COULD be a regex for this, but i'd advise for keeping this code anyways (even if as a comment).
-    //Because the regex for this would be a *nightmare*
     validateMacro(macro)
     {
         //retval flags
@@ -114,17 +110,26 @@ module.exports = {
             GreatestPossibleValue: undefined,
             LowestPossibleValue: undefined
         }
-
-
+        //firstly, check the primitive macro. 
+        if(Number.isFinite(macro))
+        {
+            flags.GreatestPossibleValue = macro;
+            flags.LowestPossibleValue = macro;
+            return flags;
+        }
+        
+        
         //current depth
         let depth = 0;
         //these blocks hold the 'macro' for recursive calls
         let blocks = [];
         //we need to identify the blocks start and end.
         let start = 0, end = 0;
+        //flags of the inner blocks.
+        let innerFlags = [];
+        // The top - level operator(s) of this macro
+        let operators = [];
 
-        //Current operator. We want value here to be accesible to modification via other functions, so we set up a "pass-by-reference"
-        let operator = {value: ""};
 
         //We scan the entire macro for intermiedary steps etc.
         for(let i = 0; i < input.length; i++)
@@ -155,132 +160,71 @@ module.exports = {
                 }
                 return flags;
             }
-            //All stuff at depth > 0 should be ignored - a recursive call will handle it. At depth < 0 we immediately return an invalid expression. Therefore we only consider at depth == 0
+            //Scan for operators / constants at depth == 0
             else if(depth == 0)
             {
-                flags.isValid = this.validateOperators(operator,input[i]);
+                operators.push(input[i]);
             }
         }
-        //flags of the inner blocks.
-        let innerFlags = [];
+
         //We need to hold the indexes in both blocks[] and innerflags[] to be the same, for some operators.
         for(let i = 0; i < blocks.length; i++)
         {
             innerFlags.push(this.validateMacro(blocks[i]));
         }
-        //if any of inner macros are invalid, this is as well, so we can return already.
-        for(const flag of innerFlags)
-        {
-            this.flags.isValid = this.flags.isValid && flag.isValid;
-        }
-        if(!flags.isValid)
-        {
-            return flags;
-        }
-
-
+        
+        this.validateTopLevelOfMacro(flags,operators,innerFlags);
     
     },
 
-
-    //Are operators in a macro valid? IF not, macro is invalidated anyway. But  operator validation is too long to be inside validateMacro()
-    validateOperators(operator, character)
+    validateTopLevelOfMacro(flags, operators, innerFlags)
     {
-        //if we found a valid operator
-        if  
-        ( 
-        character == '!' ||
-        character == '@' ||
-        character == '?' ||
-        character == '+' ||
-        character == '-' ||
-        character == '*' ||
-        character == '/' ||
-        character == '%' ||
-        character == 'd' ||                   
-        character == 'k' 
-        )
-        {   
-            //If there are multiple 'main' operators, invalidate it. They should be in brackets, to avoid confusion about the order of operations.
-            if(operator.value == '')
-                operator.value = character;
-            else
-            {
-                return false;;
-            }
-        }
-        //sometimes an operator accepts a third operand. A 'secondary' operator is then required to note that. Ex. (3)d(6)h(1) should be valid
-        else if (character == 'h' || character == 'w' || character == 'l' || character == 'n')
-        {
-            if(operator.value != 'd' && operator.value != 'k')
-            {
-                return false;
-            }
-        }
-        else if (character == ':')
-        {
-            if(operator.value != '?')
-            {
-                return false;
-            }
-        }
-        //We accept only operators (handled above) and numbers. 
-        else if (!Number.isInteger(parseInt(character)))
-        {
-            return false;
-        }
-        //If there are numbers, why? Is it a constant? Or is this an invalid (2)d6(8) 
-        else if (operator.value != '')
-        {
-            return false;
-        }
-        //we have a number literal, alone, without any operator therefore the number *is* the operator.
-        else
-        {
-             
-        }
-        //All clear.
-        return true;
-    },
-
-    //I have no idea how to do it 'clean', wihout repeating *some* chcecks...
-    validateOperands(operator,innerFlags,constant)
-    {
-        let flags = 
-        {
-            isValid: true,
-            GreatestPossibleValue: undefined,
-            LowestPossibleValue: undefined
-        }
-
-        // + - * / % ! @ d\k h\w l\n ?\:
-        switch (operator.value) {
-            case '+':
+        if(innerFlags.length != operators.length)
+        switch (operators[0]) {
+            case "+":
                 break;
-            case '-':
+            case "-":
                 break;
-            case '*':
+            case "*":
                 break;
-            case '/':
-                break;    
-            case '%':
-                break;    
-            case '!':
-                break;    
-            case '@':
+            //we can allow for division in both ways.
+            case "\\":
+            case "/":
                 break;
-            // 'd and 'k' are the same operator    
-            case 'd':
-            case 'k':
-                break;    
-            case '%':
-                break;    
-            //number
+            case "d":
+            case "k":
+                break;
+            case "@":
+                break;
+            case "!":
+                break;
+            case "?":
+                break;
+            
+            
+            // No operators. Would happer in sth like (3)(4), which is invalid. 
+            // But also in sth like ((3)), wchich is valid.
+            // The key is that in ((3)), there is precisely one inner flag. And we can just copy that, since ((3)) === (3) === 3
+            case undefined:
+                if(innerFlags.length == 1)
+                {
+                    flags == innerFlags[0];
+                }
+                else
+                {
+                    flags.isValid = false;
+                }
+                break;
+            //Unknown operator
             default:
-                flags.GreatestPossibleValue;
+                flags.isValid = false;
                 break;
         }
     },
+    
+
+
+
 
     roll(args)
     {
@@ -301,6 +245,11 @@ module.exports = {
         console.assert(Number.isInteger(this.rollDie(20)));
         console.assert(this.rollDie(20) >= 1);
         console.assert(this.rollDie(20) <= 20);
+
+        let randomInt = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+        console.assert(Number.isInteger(this.rollDie(randomInt)));
+        console.assert(this.rollDie(randomInt) >= 1);
+        console.assert(this.rollDie(randomInt) <= randomInt);
 
         //validateDieExpression tests
 
