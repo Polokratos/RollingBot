@@ -56,4 +56,6 @@ Client.on('message', message => {
 
 
 //Client verification token. As the repository is now public, the token was regenerated and the old token removed from repo.
+
 Client.login('');
+
