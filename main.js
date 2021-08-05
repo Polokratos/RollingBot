@@ -61,6 +61,5 @@ Client.on('message', message => {
 
 
 
-//login credentials. string literal is taken from discord.com/developers. Search for 'RollingBot' in there.
-Client.login('NzAzNTcyNzU2OTI2NjkzNDA3.XqQjMQ.exXh4IAyAP1Azxdqp66PqkVPE7A');
-// YT tutorial said this has to be the last line in the code, so don't put stuff here.
+//Client verification token. As the repository is now public, the token was regenerated and the old token removed from repo.
+Client.login('');
